@@ -2,7 +2,7 @@
 
 Production-grade REST API for real-time IoT sensor data, AI-powered disease diagnosis, and weather integration.
 
-**Lead:** Bayisa Balcha Teka (@bayisa)
+**Lead:** Bayisa and (@beka)
 
 ---
 

@@ -66,18 +66,18 @@ apps/web/
 │
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx               ← Root layout (fonts, theme, providers)
+│   │   ├── layout.tsx       ← Root layout (fonts, themproviders)
 │   │   ├── page.tsx                 ← Home/landing page
 │   │   ├── not-found.tsx
 │   │   ├── error.tsx
 │   │   │
 │   │   ├── (auth)/                  ← Auth routes (no layout)
 │   │   │   ├── login/page.tsx
-│   │   │   └── register/page.tsx
+│   │   │   └── signup/page.tsx
 │   │   │
-│   │   ├── (dashboard)/             ← Protected routes with sidebar
+│   │   ├── dashboard/             ← Protected routes with sidebar
 │   │   │   ├── layout.tsx           ← Sidebar + nav shell
-│   │   │   ├── dashboard/           ← Farm Dashboard (main)
+│   │   │   ├              ← Farm Dashboard (main)
 │   │   │   │   └── page.tsx
 │   │   │   ├── diagnose/            ← Disease diagnosis section
 │   │   │   │   ├── page.tsx         ← Take photo / upload
@@ -124,7 +124,8 @@ apps/web/
 │   │   │
 │   │   └── layout/                  ← Layout components
 │   │       ├── Sidebar.tsx          ← Desktop navigation
-│   │       ├── Topbar.tsx           ← Header + user menu
+│   │       ├── Topbar.tsx
+            |-DashboardLayout.tsx  ← Header + user menu
 │   │       ├── BottomNav.tsx        ← Mobile bottom navigation
 │   │       └── AuthGuard.tsx        ← Protected route wrapper
 │   │

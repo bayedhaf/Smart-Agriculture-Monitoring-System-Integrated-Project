@@ -12,7 +12,7 @@ const {
 
 const router = Router();
 
-// Rate limiting: 20 diagnosis submissions per 15 minutes per IP
+// Rate limiting: 20 diagnosis requests per 15 minutes per IP (covers all routes)
 const diagnosisRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -24,7 +24,8 @@ const diagnosisRateLimiter = rateLimit({
   },
 });
 
-// All diagnosis endpoints require a valid Firebase ID token
+// All diagnosis endpoints require a valid Firebase ID token and are rate-limited
+router.use(diagnosisRateLimiter);
 router.use(verifyToken);
 
 /**
@@ -33,7 +34,7 @@ router.use(verifyToken);
  * @access  Private (Bearer token)
  * @body    multipart/form-data: image (file), cropType (string)
  */
-router.post("/", diagnosisRateLimiter, upload.single("image"), submitDiagnosis);
+router.post("/", upload.single("image"), submitDiagnosis);
 
 /**
  * @route   GET /api/v1/diagnose/history

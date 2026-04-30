@@ -156,7 +156,7 @@ function Navbar() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/auth/login">
+          <Link href="/login">
             <Button
               variant="ghost"
               className="text-sm text-[#c0c9bb] hover:text-[#91d78a] hover:bg-transparent"
@@ -164,7 +164,7 @@ function Navbar() {
               Sign in
             </Button>
           </Link>
-          <Link href="/auth/register">
+          <Link href="/signup">
             <Button className="h-9 px-5 text-sm rounded-[0.5rem] bg-[#1b5e20] hover:bg-[#2e7d32] text-white border border-[#91d78a]/20 hover:border-[#91d78a]/50 transition-all">
               Get started free
             </Button>
@@ -195,12 +195,12 @@ function Navbar() {
             </a>
           ))}
           <div className="pt-2 flex flex-col gap-2">
-            <Link href="/auth/login" onClick={() => setOpen(false)}>
+            <Link href="/login" onClick={() => setOpen(false)}>
               <Button variant="outline" className="w-full h-10 text-sm rounded-[0.5rem] border-[#41493e] text-[#c0c9bb] bg-transparent hover:bg-[#201f1f] hover:text-[#91d78a]">
                 Sign in
               </Button>
             </Link>
-            <Link href="/auth/register" onClick={() => setOpen(false)}>
+            <Link href="/signup" onClick={() => setOpen(false)}>
               <Button className="w-full h-10 text-sm rounded-[0.5rem] bg-[#1b5e20] hover:bg-[#2e7d32] text-white">
                 Get started free
               </Button>
@@ -270,7 +270,7 @@ function Hero() {
             </p>
 
             <div className="flex flex-wrap gap-3 mb-10">
-              <Link href="/auth/register">
+              <Link href="/signup">
                 <Button className="h-12 px-7 text-sm font-semibold rounded-[0.5rem] bg-[#91d78a] hover:bg-[#acf4a4] text-[#003909] transition-all hover:scale-[1.02] active:scale-[0.98] group">
                   Start monitoring free
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

@@ -31,8 +31,6 @@ const loginSchema = z.object({
   rememberMe: z.boolean().default(false),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
-
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter();
@@ -81,8 +79,14 @@ export default function LoginPage() {
         result.data.password
       );
       router.push("/dashboard");
-    } catch (error: any) {
-      const code = error?.code as string | undefined;
+    } catch (error: unknown) {
+      const code =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        typeof (error as { code?: unknown }).code === "string"
+          ? (error as { code: string }).code
+          : undefined;
       if (code === "auth/invalid-credential" || code === "auth/user-not-found") {
         setServerError("Invalid email or password. Please try again.");
       } else if (code === "auth/too-many-requests") {
@@ -141,7 +145,7 @@ export default function LoginPage() {
               {/* Server error */}
               {serverError && (
                 <div className="mb-5 flex items-start gap-3 bg-[#FCEBEB] border border-[#F7C1C1] rounded-xl p-3.5">
-                  <div className="w-5 h-5 rounded-full bg-[#A32D2D] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-[#A32D2D] flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-white text-xs font-bold">!</span>
                   </div>
                   <p className="text-sm text-[#791F1F]">{serverError}</p>

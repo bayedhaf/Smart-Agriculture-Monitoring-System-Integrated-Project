@@ -40,8 +40,6 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
 // ─── Password strength helper ─────────────────────────────────────────────────
 function getPasswordStrength(password: string): {
   score: number;
@@ -122,14 +120,29 @@ export default function RegisterPage() {
       await createUserWithEmailAndPassword(auth, result.data.email, result.data.password);
       setSuccess(true);
       setTimeout(() => router.push("/dashboard"), 1500);
-    } catch (error: any) {
-      if (error.code === "auth/email-already-in-use") {
+    } catch (error: unknown) {
+      const errorCode =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        typeof (error as { code?: unknown }).code === "string"
+          ? (error as { code: string }).code
+          : undefined;
+      const errorMessage =
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        typeof (error as { message?: unknown }).message === "string"
+          ? (error as { message: string }).message
+          : undefined;
+
+      if (errorCode === "auth/email-already-in-use") {
         setErrors((prev) => ({
           ...prev,
           email: "An account with this email already exists",
         }));
       } else {
-        setServerError(error.message ?? "Registration failed. Please try again.");
+        setServerError(errorMessage ?? "Registration failed. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -201,7 +214,7 @@ export default function RegisterPage() {
               {/* Server error */}
               {serverError && (
                 <div className="mb-5 flex items-start gap-3 bg-[#FCEBEB] border border-[#F7C1C1] rounded-xl p-3.5">
-                  <div className="w-5 h-5 rounded-full bg-[#A32D2D] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-[#A32D2D] flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-white text-xs font-bold">!</span>
                   </div>
                   <p className="text-sm text-[#791F1F]">{serverError}</p>

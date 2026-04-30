@@ -4,13 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "jest": {
+    "testEnvironment": "node"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
     "express": "^5.2.1",
-    "firebase-admin": "^13.8.0"
+    "firebase-admin": "^13.8.0",
+    "multer": "^2.1.1"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
   }
 }

@@ -14,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function ScanPage() {
   const [cropType, setCropType] = useState("Maize");
@@ -104,7 +105,7 @@ export default function ScanPage() {
 
           <div className="space-y-3">
             {/* Item 1 */}
-            <div className="bg-[#1A1A1A] rounded-[16px] p-3 flex items-center gap-4 border border-[#2A2A2A] cursor-pointer hover:bg-[#222222] transition-colors">
+            <Link href="/scan/tomato-blight" className="bg-[#1A1A1A] rounded-[16px] p-3 flex items-center gap-4 border border-[#2A2A2A] cursor-pointer hover:bg-[#222222] transition-colors">
               <div className="w-[52px] h-[52px] rounded-[12px] bg-[#222] overflow-hidden flex-shrink-0 relative">
                 <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
               </div>
@@ -119,10 +120,10 @@ export default function ScanPage() {
                 <span className="text-[11px] text-gray-500">2h ago</span>
                 <ChevronRight size={18} className="text-gray-500" />
               </div>
-            </div>
+            </Link>
 
             {/* Item 2 */}
-            <div className="bg-[#1A1A1A] rounded-[16px] p-3 flex items-center gap-4 border border-[#2A2A2A] cursor-pointer hover:bg-[#222222] transition-colors">
+            <Link href="/scan/maize-healthy" className="bg-[#1A1A1A] rounded-[16px] p-3 flex items-center gap-4 border border-[#2A2A2A] cursor-pointer hover:bg-[#222222] transition-colors">
               <div className="w-[52px] h-[52px] rounded-[12px] bg-[#222] overflow-hidden flex-shrink-0 relative">
                 <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
               </div>
@@ -137,10 +138,10 @@ export default function ScanPage() {
                 <span className="text-[11px] text-gray-500">Yesterday</span>
                 <ChevronRight size={18} className="text-gray-500" />
               </div>
-            </div>
+            </Link>
 
             {/* Item 3 */}
-            <div className="bg-[#1A1A1A] rounded-[16px] p-3 flex items-center gap-4 border border-[#2A2A2A] cursor-pointer hover:bg-[#222222] transition-colors">
+            <Link href="/scan/potato-rust" className="bg-[#1A1A1A] rounded-[16px] p-3 flex items-center gap-4 border border-[#2A2A2A] cursor-pointer hover:bg-[#222222] transition-colors">
               <div className="w-[52px] h-[52px] rounded-[12px] bg-[#222] overflow-hidden flex-shrink-0 relative">
                 <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1518978155253-ab021fb2b75a?auto=format&fit=crop&q=80&w=200')] bg-cover bg-center"></div>
               </div>
@@ -155,7 +156,7 @@ export default function ScanPage() {
                 <span className="text-[11px] text-gray-500">Oct 24</span>
                 <ChevronRight size={18} className="text-gray-500" />
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </main>

@@ -1,6 +1,5 @@
 // app.js
 // Express application setup
-require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -11,9 +10,9 @@ const healthRoutes = require("./src/routes/health.routes");
 const app = express();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
-  .split(",")
-  .map((o) => o.trim());
+const allowedOrigins = process.env.NODE_ENV === "production"
+  ? process.env.CORS_ORIGIN?.split(",")?.map((o) => o.trim()) || []
+  : ["http://localhost:3000"];
 
 app.use(
   cors({

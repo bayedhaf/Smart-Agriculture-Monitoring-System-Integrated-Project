@@ -1,5 +1,7 @@
 
 # Secrets
 apps/api/confi/serviceAccountKey.json
+apps/api/.env
+smart-agritech-8122a-firebase-adminsdk-fbsvc-57f367890e.json
 node_modules/
 apps/api/.vercel/

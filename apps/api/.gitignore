@@ -1,2 +1,3 @@
 .vercel
 config/serviceAccountKey.json
+.env

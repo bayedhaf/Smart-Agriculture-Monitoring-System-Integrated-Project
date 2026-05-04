@@ -6,6 +6,7 @@ const cors = require("cors");
 
 const diagnoseRoutes = require("./src/routes/diagnose.routes");
 const healthRoutes = require("./src/routes/health.routes");
+const sensorAnalysisRoutes = require("./src/routes/sensor-analysis.routes");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1/diagnose", diagnoseRoutes);
+app.use("/api/v1/sensor-analysis", sensorAnalysisRoutes);
 
 // ─── 404 handler ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {

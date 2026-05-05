@@ -30,7 +30,7 @@ Production-grade REST API for real-time IoT sensor data, AI-powered disease diag
 - Node.js 18+
 - npm/pnpm installed
 - Firebase Admin SDK service account key
-- Claude API key (Anthropic)
+- Google Gemini API key
 - OpenWeatherMap API key
 
 ### Installation
@@ -49,7 +49,7 @@ cp .env.example .env
 # - FIREBASE_PROJECT_ID
 # - FIREBASE_PRIVATE_KEY
 # - FIREBASE_CLIENT_EMAIL
-# - CLAUDE_API_KEY
+# - GEMINI_API_KEY
 # - OPENWEATHERMAP_API_KEY
 # - JWT_SECRET
 
@@ -81,7 +81,7 @@ Services (Business logic & orchestration)
    ↓
 Repositories (Firebase data access)
    ↓
-External APIs (Claude, OpenWeatherMap)
+External APIs (Gemini, OpenWeatherMap)
 ```
 
 ### Request Flow Example: Disease Diagnosis
@@ -93,7 +93,7 @@ diagnose.routes.ts (Route handler)
   ↓
 diagnose.controller.ts (Validate input, call service)
   ↓
-diagnose.service.ts (Orchestrate: upload image → call Claude → save result)
+diagnose.service.ts (Orchestrate: upload image → call Gemini → save result)
   ↓
 ai.service.ts (Call Claude Vision API)
 ↓
@@ -145,7 +145,7 @@ apps/api/
 │   ├── services/                    ← Business logic
 │   │   ├── auth.service.ts          ← Password hashing, JWT creation
 │   │   ├── diagnose.service.ts      ← Orchestrate AI + storage
-│   │   ├── ai.service.ts            ← Claude Vision API wrapper
+│   │   ├── ai.service.ts            ← Gemini Vision API wrapper
 │   │   ├── sensor.service.ts        ← Sensor data logic
 │   │   ├── weather.service.ts       ← OpenWeatherMap integration
 │   │   └── recommendation.service.ts← Rule engine (irrigation logic)
@@ -214,7 +214,7 @@ apps/api/
 | **Database**       | Firebase Realtime DB | Real-time data storage       |
 | **File Storage**   | Firebase Storage     | Image uploads                |
 | **Authentication** | Firebase Auth + JWT  | User auth & API tokens       |
-| **AI Integration** | Anthropic Claude API | Disease diagnosis via vision |
+| **AI Integration** | Google Gemini API   | Disease diagnosis via vision |
 | **Weather**        | OpenWeatherMap API   | Weather forecasts & data     |
 | **Validation**     | Zod                  | Schema validation & parsing  |
 | **File Upload**    | Multer               | Image handling               |
@@ -249,7 +249,7 @@ FIREBASE_CLIENT_EMAIL=firebase-adminsdk-abc@project.iam.gserviceaccount.com
 FIREBASE_DATABASE_URL=https://your-project.firebasedatabase.app
 
 # External APIs
-CLAUDE_API_KEY=sk-ant-...
+GEMINI_API_KEY=AIzaSy...
 OPENWEATHERMAP_API_KEY=your-openweathermap-key
 
 # Rate Limiting
@@ -544,7 +544,7 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xyz@smart-agri-prod.iam.gserviceaccount.com
 FIREBASE_DATABASE_URL=https://smart-agri-prod.firebasedatabase.app
 
-CLAUDE_API_KEY=sk-ant-...
+GEMINI_API_KEY=AIzaSy...
 OPENWEATHERMAP_API_KEY=...
 
 CORS_ORIGIN=https://agritech-astu.vercel.app
@@ -592,7 +592,7 @@ Health: https://api.agritech-astu.com/api/v1/health
 | Issue                         | Solution                                                      |
 | ----------------------------- | ------------------------------------------------------------- |
 | **Firebase connection error** | Check `.env` vars, verify service account key is valid        |
-| **Claude API 401**            | Verify `CLAUDE_API_KEY` is correct and not expired            |
+| **Gemini API 401**            | Verify `GEMINI_API_KEY` is correct and not expired            |
 | **Port 5000 already in use**  | Kill process: `lsof -ti:5000 \| xargs kill -9` or change PORT |
 | **Tests failing**             | Clear cache: `npm run test -- --clearCache` and rebuild       |
 | **Rate limit exceeded**       | Adjust `RATE_LIMIT_MAX_REQUESTS` in `.env`                    |
@@ -632,7 +632,7 @@ Health: https://api.agritech-astu.com/api/v1/health
 - [Zod Documentation](https://zod.dev/)
 - [Swagger/OpenAPI](https://swagger.io/specification/)
 - [JWT.io](https://jwt.io/)
-- [Claude API Docs](https://docs.anthropic.com/)
+- [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
 
 ---
 

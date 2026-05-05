@@ -6,7 +6,7 @@ const { diagnoseCropDisease } = require("./ai.service");
 /**
  * Creates a new diagnosis:
  * 1. Upload the image to Firebase Storage
- * 2. Run Claude Vision AI diagnosis
+ * 2. Run Gemini Vision AI diagnosis
  * 3. Save the result to Firestore under /diagnoses/{userId}/{diagnosisId}
  *
  * @param {string} userId        - Authenticated user ID

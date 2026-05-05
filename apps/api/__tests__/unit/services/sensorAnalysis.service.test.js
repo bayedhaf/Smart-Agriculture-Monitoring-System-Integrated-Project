@@ -1,14 +1,14 @@
 // __tests__/unit/services/sensorAnalysis.service.test.js
-// Unit tests for the Claude AI sensor-data analysis service
+// Unit tests for the Gemini AI sensor-data analysis service
 "use strict";
 
-// ── Mock the Anthropic SDK before requiring the service ──────────────────────
-const mockCreate = jest.fn();
-jest.mock("@anthropic-ai/sdk", () => {
-  return jest.fn().mockImplementation(() => ({
-    messages: { create: mockCreate },
-  }));
-});
+// ── Mock the Gemini SDK before requiring the service ─────────────────────────
+const mockGenerate = jest.fn();
+jest.mock("@google/genai", () => ({
+  GoogleGenAI: jest.fn().mockImplementation(() => ({
+    models: { generateContent: mockGenerate },
+  })),
+}));
 
 const {
   analyzeSensorData,
@@ -18,9 +18,12 @@ const {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Build a minimal Anthropic API response wrapping `jsonText`. */
+/**
+ * Build a minimal Gemini API response object wrapping `jsonText`.
+ * Gemini surfaces the first text part via the `text` convenience property.
+ */
 function makeApiResponse(jsonText) {
-  return { content: [{ type: "text", text: jsonText }] };
+  return { text: jsonText };
 }
 
 /** A valid "optimal" sensor analysis JSON string. */
@@ -84,19 +87,19 @@ const CRITICAL_JSON = JSON.stringify({
 // ── Test suite: analyzeSensorData ─────────────────────────────────────────────
 
 describe("analyzeSensorData", () => {
-  const FAKE_API_KEY = "sk-ant-test-key";
+  const FAKE_API_KEY = "AIza-test-gemini-key";
 
   beforeEach(() => {
-    process.env.CLAUDE_API_KEY = FAKE_API_KEY;
-    mockCreate.mockReset();
+    process.env.GEMINI_API_KEY = FAKE_API_KEY;
+    mockGenerate.mockReset();
   });
 
   afterEach(() => {
-    delete process.env.CLAUDE_API_KEY;
+    delete process.env.GEMINI_API_KEY;
   });
 
   test("returns optimal analysis for healthy sensor readings", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(OPTIMAL_JSON));
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(OPTIMAL_JSON));
 
     const result = await analyzeSensorData({
       temperature: 24,
@@ -114,7 +117,7 @@ describe("analyzeSensorData", () => {
   });
 
   test("returns warning analysis when readings are outside ideal range", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(WARNING_JSON));
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(WARNING_JSON));
 
     const result = await analyzeSensorData({
       temperature: 37,
@@ -130,7 +133,7 @@ describe("analyzeSensorData", () => {
   });
 
   test("returns critical analysis for dangerous conditions", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(CRITICAL_JSON));
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(CRITICAL_JSON));
 
     const result = await analyzeSensorData({
       temperature: 30,
@@ -144,32 +147,34 @@ describe("analyzeSensorData", () => {
   });
 
   test("works without a cropType", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(OPTIMAL_JSON));
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(OPTIMAL_JSON));
 
     const result = await analyzeSensorData({ temperature: 22, humidity: 60, soilMoisture: 50 });
 
     expect(result.status).toBe("optimal");
   });
 
-  test("passes the correct model, system prompt, and message to the Anthropic SDK", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(OPTIMAL_JSON));
+  test("passes the correct model, system prompt, and message to the Gemini SDK", async () => {
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(OPTIMAL_JSON));
 
     await analyzeSensorData({ temperature: 24, humidity: 65, soilMoisture: 55, cropType: "teff" });
 
-    const callArgs = mockCreate.mock.calls[0][0];
-    expect(callArgs.model).toBe("claude-opus-4-5");
-    expect(callArgs.max_tokens).toBe(1024);
-    expect(callArgs.system).toContain("agricultural advisor");
-    expect(callArgs.messages[0].role).toBe("user");
-    expect(callArgs.messages[0].content).toContain("teff");
-    expect(callArgs.messages[0].content).toContain("24");
+    const callArgs = mockGenerate.mock.calls[0][0];
+    expect(callArgs.model).toBe("gemini-2.0-flash");
+    expect(callArgs.config.maxOutputTokens).toBe(1024);
+    expect(callArgs.config.systemInstruction).toContain("agricultural advisor");
+    expect(callArgs.contents[0].role).toBe("user");
+    // Sensor data is sent as a text part
+    const textPart = callArgs.contents[0].parts[0].text;
+    expect(textPart).toContain("teff");
+    expect(textPart).toContain("24");
   });
 
-  test("throws when CLAUDE_API_KEY is not set", async () => {
-    delete process.env.CLAUDE_API_KEY;
+  test("throws when GEMINI_API_KEY is not set", async () => {
+    delete process.env.GEMINI_API_KEY;
     await expect(
       analyzeSensorData({ temperature: 24, humidity: 65, soilMoisture: 55 })
-    ).rejects.toThrow("CLAUDE_API_KEY");
+    ).rejects.toThrow("GEMINI_API_KEY");
   });
 
   test("throws when reading is null or missing", async () => {
@@ -184,14 +189,14 @@ describe("analyzeSensorData", () => {
   });
 
   test("throws when the API returns an empty response", async () => {
-    mockCreate.mockResolvedValueOnce({ content: [] });
+    mockGenerate.mockResolvedValueOnce({ text: null });
     await expect(
       analyzeSensorData({ temperature: 24, humidity: 65, soilMoisture: 55 })
-    ).rejects.toThrow("Empty response from Claude API");
+    ).rejects.toThrow("Empty response from Gemini API");
   });
 
-  test("throws when Claude returns non-JSON text", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse("I cannot analyze that."));
+  test("throws when Gemini returns non-JSON text", async () => {
+    mockGenerate.mockResolvedValueOnce(makeApiResponse("I cannot analyze that."));
     await expect(
       analyzeSensorData({ temperature: 24, humidity: 65, soilMoisture: 55 })
     ).rejects.toThrow("non-JSON response");
@@ -215,6 +220,12 @@ describe("parseSensorAnalysisResponse", () => {
     expect(result.alerts[0]).toHaveProperty("type");
     expect(result.alerts[0]).toHaveProperty("message");
     expect(result.alerts[0]).toHaveProperty("severity");
+  });
+
+  test("strips markdown code fences before parsing", () => {
+    const wrapped = "```json\n" + OPTIMAL_JSON + "\n```";
+    const result = parseSensorAnalysisResponse(wrapped);
+    expect(result.status).toBe("optimal");
   });
 
   test("throws for invalid JSON", () => {

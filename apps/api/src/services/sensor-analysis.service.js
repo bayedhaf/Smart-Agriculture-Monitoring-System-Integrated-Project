@@ -1,10 +1,11 @@
 // src/services/sensor-analysis.service.js
-// Claude AI-powered analysis of IoT sensor readings for farming recommendations
+// Gemini AI-powered analysis of IoT sensor readings for farming recommendations
 "use strict";
 
-const Anthropic = require("@anthropic-ai/sdk");
+const { GoogleGenAI } = require("@google/genai");
 
-const MODEL = "claude-opus-4-5";
+// Use Gemini's latest flash model for fast, cost-efficient text analysis
+const MODEL = "gemini-2.0-flash";
 
 const SENSOR_ANALYSIS_SYSTEM_PROMPT = `You are an expert agricultural advisor specializing in precision farming and IoT sensor data interpretation.
 Analyze the provided sensor readings from a farm and return ONLY a valid JSON object — no markdown fences, no extra text.
@@ -44,7 +45,7 @@ const CROP_RANGES = {
 };
 
 /**
- * Build the Claude prompt for sensor data analysis.
+ * Build the Gemini prompt for sensor data analysis.
  *
  * @param {object} reading
  * @param {number} reading.temperature  - Air temperature in °C
@@ -76,7 +77,7 @@ function buildSensorAnalysisPrompt({ temperature, humidity, soilMoisture, cropTy
 }
 
 /**
- * Parse and validate the raw Claude text response into a SensorAnalysisResult.
+ * Parse and validate the raw Gemini text response into a SensorAnalysisResult.
  *
  * @param {string} rawText
  * @returns {SensorAnalysisResult}
@@ -85,9 +86,11 @@ function buildSensorAnalysisPrompt({ temperature, humidity, soilMoisture, cropTy
 function parseSensorAnalysisResponse(rawText) {
   let parsed;
   try {
-    parsed = JSON.parse(rawText.trim());
+    // Strip optional markdown code fences that Gemini may include
+    const cleaned = rawText.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    parsed = JSON.parse(cleaned);
   } catch {
-    throw new Error(`Claude returned non-JSON response: ${rawText.slice(0, 200)}`);
+    throw new Error(`Gemini returned non-JSON response: ${rawText.slice(0, 200)}`);
   }
 
   const requiredFields = [
@@ -100,7 +103,7 @@ function parseSensorAnalysisResponse(rawText) {
   ];
   const missing = requiredFields.filter((f) => !(f in parsed));
   if (missing.length > 0) {
-    throw new Error(`Claude response missing required fields: ${missing.join(", ")}`);
+    throw new Error(`Gemini response missing required fields: ${missing.join(", ")}`);
   }
 
   const validStatuses = ["optimal", "warning", "critical"];
@@ -133,7 +136,7 @@ function parseSensorAnalysisResponse(rawText) {
 }
 
 /**
- * Analyze farm sensor readings using Claude AI and return structured recommendations.
+ * Analyze farm sensor readings using Gemini AI and return structured recommendations.
  *
  * @param {object} reading
  * @param {number} reading.temperature  - Air temperature in °C
@@ -161,28 +164,34 @@ async function analyzeSensorData(reading) {
     throw new Error("temperature, humidity, and soilMoisture are required");
   }
 
-  const apiKey = process.env.CLAUDE_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("CLAUDE_API_KEY environment variable is not set");
+    throw new Error("GEMINI_API_KEY environment variable is not set");
   }
 
-  const client = new Anthropic({ apiKey });
+  // Instantiate the Gemini client with the provided API key
+  const ai = new GoogleGenAI({ apiKey });
 
-  const response = await client.messages.create({
+  const response = await ai.models.generateContent({
     model: MODEL,
-    max_tokens: 1024,
-    system: SENSOR_ANALYSIS_SYSTEM_PROMPT,
-    messages: [
+    contents: [
       {
         role: "user",
-        content: buildSensorAnalysisPrompt(reading),
+        // Sensor readings are text-only — no image data needed
+        parts: [{ text: buildSensorAnalysisPrompt(reading) }],
       },
     ],
+    config: {
+      // Inject the agricultural advisor persona as the system instruction
+      systemInstruction: SENSOR_ANALYSIS_SYSTEM_PROMPT,
+      maxOutputTokens: 1024,
+    },
   });
 
-  const rawText = response.content?.[0]?.text;
+  // `response.text` is the convenience accessor for the first text part
+  const rawText = response.text;
   if (!rawText) {
-    throw new Error("Empty response from Claude API");
+    throw new Error("Empty response from Gemini API");
   }
 
   return parseSensorAnalysisResponse(rawText);

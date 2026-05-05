@@ -95,7 +95,7 @@ diagnose.controller.ts (Validate input, call service)
   ↓
 diagnose.service.ts (Orchestrate: upload image → call Gemini → save result)
   ↓
-ai.service.ts (Call Claude Vision API)
+ai.service.ts (Call Gemini Vision API)
 ↓
 diagnosis.repository.ts (Save diagnosis to Firebase)
   ↓

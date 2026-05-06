@@ -1,11 +1,16 @@
 // services/ai.service.js
-// Claude Vision API wrapper for crop disease diagnosis
-const Anthropic = require("@anthropic-ai/sdk").default;
+// Gemini Vision API wrapper for crop disease diagnosis
+"use strict";
+
+const { GoogleGenAI } = require("@google/genai");
 
 const SUPPORTED_CROP_TYPES = ["maize", "tomato", "teff", "wheat", "sorghum", "barley", "other"];
 
+// Use Gemini's multimodal model which supports image + text inputs
+const MODEL = "gemini-2.0-flash";
+
 /**
- * Diagnoses crop diseases from a leaf image using Claude Vision API.
+ * Diagnoses crop diseases from a leaf image using the Gemini Vision API.
  *
  * @param {Buffer} imageBuffer - Raw image data
  * @param {string} mimeType    - MIME type of the image (e.g. "image/jpeg")
@@ -13,12 +18,13 @@ const SUPPORTED_CROP_TYPES = ["maize", "tomato", "teff", "wheat", "sorghum", "ba
  * @returns {Promise<DiagnosisResult>}
  */
 async function diagnoseCropDisease(imageBuffer, mimeType, cropType) {
-  const apiKey = process.env.CLAUDE_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("CLAUDE_API_KEY is not configured");
+    throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  const client = new Anthropic({ apiKey });
+  // Instantiate the Gemini client with the provided API key
+  const ai = new GoogleGenAI({ apiKey });
 
   const normalizedCrop = SUPPORTED_CROP_TYPES.includes(cropType?.toLowerCase())
     ? cropType.toLowerCase()
@@ -26,38 +32,36 @@ async function diagnoseCropDisease(imageBuffer, mimeType, cropType) {
 
   const prompt = buildDiagnosisPrompt(normalizedCrop);
 
+  // Gemini expects base64-encoded image data as a string
   const base64Image = imageBuffer.toString("base64");
 
-  const response = await client.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 1024,
-    messages: [
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [
       {
         role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: mimeType,
-              data: base64Image,
-            },
-          },
-          {
-            type: "text",
-            text: prompt,
-          },
+        // Multimodal content: image bytes followed by the text instruction
+        parts: [
+          { inlineData: { mimeType, data: base64Image } },
+          { text: prompt },
         ],
       },
     ],
+    config: {
+      maxOutputTokens: 1024,
+    },
   });
 
-  const rawText = response.content[0]?.text || "";
+  // `response.text` is the convenience accessor for the first text part
+  const rawText = response.text || "";
   return parseAIResponse(rawText, normalizedCrop);
 }
 
 /**
- * Builds the Claude prompt for disease diagnosis.
+ * Builds the Gemini prompt for disease diagnosis.
+ *
+ * @param {string} cropType - Normalized crop type (e.g. "maize")
+ * @returns {string}
  */
 function buildDiagnosisPrompt(cropType) {
   return `You are an expert agricultural plant pathologist. Analyze this ${cropType !== "unknown" ? cropType : "crop"} leaf image and diagnose any diseases or health issues.
@@ -77,6 +81,10 @@ Respond ONLY in the following JSON format (no additional text):
 /**
  * Parses the raw AI response text into a structured DiagnosisResult.
  * Falls back gracefully if JSON parsing fails.
+ *
+ * @param {string} rawText - Raw text from Gemini response
+ * @param {string} cropType - Normalized crop type for the fallback object
+ * @returns {DiagnosisResult}
  */
 function parseAIResponse(rawText, cropType) {
   try {
@@ -112,6 +120,13 @@ function parseAIResponse(rawText, cropType) {
   }
 }
 
+/**
+ * Validates a severity string against the allowed set.
+ * Returns "none" when the value is unrecognised.
+ *
+ * @param {string} value
+ * @returns {"none"|"low"|"medium"|"high"}
+ */
 function validateSeverity(value) {
   const allowed = ["none", "low", "medium", "high"];
   return allowed.includes(value) ? value : "none";

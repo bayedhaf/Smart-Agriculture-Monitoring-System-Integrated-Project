@@ -25,7 +25,7 @@ A comprehensive IoT + AI solution for real-time crop monitoring and disease diag
 Smart Agriculture Monitoring System is an end-to-end platform enabling farmers to:
 
 ✅ **Real-time Monitoring** - Track soil moisture, temperature, and humidity via ESP32 sensors  
-✅ **AI-Powered Diagnosis** - Identify crop diseases from leaf photos using Claude Vision API  
+✅ **AI-Powered Diagnosis** - Identify crop diseases from leaf photos using Google Gemini Vision API  
 ✅ **Weather Integration** - Get location-based weather forecasts and smart recommendations  
 ✅ **Historical Analysis** - Review past diagnoses and sensor trends  
 ✅ **Mobile-Ready** - Progressive Web App (PWA) optimized for field use
@@ -35,7 +35,7 @@ Smart Agriculture Monitoring System is an end-to-end platform enabling farmers t
 - Frontend: Next.js 14 (App Router) + React + Tailwind CSS
 - Backend: Node.js + Express + Firebase Admin SDK
 - Database: Firebase Realtime Database + Storage
-- AI: Claude Vision API (Anthropic)
+- AI: Google Gemini API (Vision + Text)
 - Weather: OpenWeatherMap API
 - Hardware: ESP32 + DHT11 + Soil Moisture Sensor
 - Deployment: Render (API) + Vercel (Frontend)
@@ -82,7 +82,7 @@ Smart Agriculture Monitoring System is an end-to-end platform enabling farmers t
 
 - Node.js 18+ and npm/pnpm
 - Firebase account (create a project)
-- Claude API key (Anthropic)
+- Google Gemini API key
 - OpenWeatherMap API key
 - Git
 
@@ -115,7 +115,7 @@ Smart Agriculture Monitoring System is an end-to-end platform enabling farmers t
 
    Fill in your credentials:
    - Firebase config (project ID, API key, etc.)
-   - Claude API key
+   - Google Gemini API key
    - OpenWeatherMap API key
    - JWT secret
 
@@ -211,7 +211,7 @@ smart-agri/                          ← Git root
 | --- | ------------------ | ---------- | ------------------------------ | ------------ | --------------------------------------------- |
 | 1   | Bayisa Balcha Teka | SE         | Project Manager & Backend Lead | @bayisa      | Sprint planning, API gateway, Firebase config |
 | 2   | Bekam Birhanu      | SE         | Frontend Lead (Next.js)        | @bekam       | App shell, routing, UI components             |
-| 3   | Girma Wakeyo       | CSE        | AI/ML Integration Lead         | @girma       | Claude Vision API, disease logic              |
+| 3   | Girma Wakeyo       | CSE        | AI/ML Integration Lead         | @girma       | Gemini Vision API, disease logic              |
 | 4   | Kenenisa Mekonnen  | CSE        | AI/Backend Engineer            | @kenenisa    | AI service wrapper, error handling            |
 | 5   | Medhanit Tesfaye   | CSE        | Database & Cloud               | @medhanit    | Firebase schema, weather API                  |
 | 6   | Marya Getu         | CSE        | QA & Documentation             | @marya       | Jest/Supertest, Swagger docs                  |
@@ -421,7 +421,7 @@ git push origin feature/AGRI-XX
 - [Next.js Docs](https://nextjs.org/docs)
 - [Express Docs](https://expressjs.com/)
 - [Firebase Docs](https://firebase.google.com/docs)
-- [Claude API Docs](https://docs.anthropic.com/)
+- [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 - [Zod Validation](https://zod.dev/)
 

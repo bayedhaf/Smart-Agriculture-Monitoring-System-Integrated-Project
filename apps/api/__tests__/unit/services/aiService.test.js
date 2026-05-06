@@ -1,22 +1,25 @@
 // __tests__/unit/services/aiService.test.js
-// Unit tests for the Claude Vision AI service (image → JSON output)
+// Unit tests for the Gemini Vision AI service (image → JSON output)
 "use strict";
 
-// ── Mock the Anthropic SDK before requiring the service ──────────────────────
-const mockCreate = jest.fn();
-jest.mock("@anthropic-ai/sdk", () => {
-  return jest.fn().mockImplementation(() => ({
-    messages: { create: mockCreate },
-  }));
-});
+// ── Mock the Gemini SDK before requiring the service ─────────────────────────
+const mockGenerate = jest.fn();
+jest.mock("@google/genai", () => ({
+  GoogleGenAI: jest.fn().mockImplementation(() => ({
+    models: { generateContent: mockGenerate },
+  })),
+}));
 
 const { analyzeImage, parseResponse, buildMessages } = require("../../../src/services/aiService");
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Build a minimal Anthropic API response wrapping `jsonText`. */
+/**
+ * Build a minimal Gemini API response object wrapping `jsonText`.
+ * Gemini surfaces the first text part via the `text` convenience property.
+ */
 function makeApiResponse(jsonText) {
-  return { content: [{ type: "text", text: jsonText }] };
+  return { text: jsonText };
 }
 
 /** A valid healthy-plant diagnosis JSON string. */
@@ -45,19 +48,19 @@ const DISEASED_JSON = JSON.stringify({
 // ── Test suite: analyzeImage ──────────────────────────────────────────────────
 
 describe("analyzeImage", () => {
-  const FAKE_API_KEY = "sk-ant-test-key";
+  const FAKE_API_KEY = "AIza-test-gemini-key";
 
   beforeEach(() => {
-    process.env.CLAUDE_API_KEY = FAKE_API_KEY;
-    mockCreate.mockReset();
+    process.env.GEMINI_API_KEY = FAKE_API_KEY;
+    mockGenerate.mockReset();
   });
 
   afterEach(() => {
-    delete process.env.CLAUDE_API_KEY;
+    delete process.env.GEMINI_API_KEY;
   });
 
   test("returns structured JSON for a healthy leaf", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(HEALTHY_JSON));
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(HEALTHY_JSON));
 
     const result = await analyzeImage("base64encodeddata==", "image/jpeg", "maize");
 
@@ -73,7 +76,7 @@ describe("analyzeImage", () => {
   });
 
   test("returns structured JSON for a diseased leaf", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(DISEASED_JSON));
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(DISEASED_JSON));
 
     const result = await analyzeImage("base64encodeddata==", "image/png");
 
@@ -86,26 +89,24 @@ describe("analyzeImage", () => {
     expect(typeof result.description).toBe("string");
   });
 
-  test("passes the correct model and messages to the Anthropic SDK", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse(HEALTHY_JSON));
+  test("passes the correct model and contents to the Gemini SDK", async () => {
+    mockGenerate.mockResolvedValueOnce(makeApiResponse(HEALTHY_JSON));
 
     await analyzeImage("abc123==", "image/jpeg", "tomato");
 
-    const callArgs = mockCreate.mock.calls[0][0];
-    expect(callArgs.model).toBe("claude-opus-4-5");
-    expect(callArgs.max_tokens).toBe(1024);
-    expect(callArgs.system).toContain("agricultural pathologist");
-    // The user message should contain both an image and a text block
-    const userContent = callArgs.messages[0].content;
-    expect(userContent[0].type).toBe("image");
-    expect(userContent[0].source.data).toBe("abc123==");
-    expect(userContent[1].type).toBe("text");
-    expect(userContent[1].text).toContain("tomato");
+    const callArgs = mockGenerate.mock.calls[0][0];
+    expect(callArgs.model).toBe("gemini-2.0-flash");
+    expect(callArgs.config.maxOutputTokens).toBe(1024);
+    expect(callArgs.config.systemInstruction).toContain("agricultural pathologist");
+    // The user message should have image data and a text block in `parts`
+    const parts = callArgs.contents[0].parts;
+    expect(parts[0].inlineData.data).toBe("abc123==");
+    expect(parts[1].text).toContain("tomato");
   });
 
-  test("throws when CLAUDE_API_KEY is not set", async () => {
-    delete process.env.CLAUDE_API_KEY;
-    await expect(analyzeImage("abc123==")).rejects.toThrow("CLAUDE_API_KEY");
+  test("throws when GEMINI_API_KEY is not set", async () => {
+    delete process.env.GEMINI_API_KEY;
+    await expect(analyzeImage("abc123==")).rejects.toThrow("GEMINI_API_KEY");
   });
 
   test("throws when no image is provided", async () => {
@@ -114,12 +115,12 @@ describe("analyzeImage", () => {
   });
 
   test("throws when the API returns an empty response", async () => {
-    mockCreate.mockResolvedValueOnce({ content: [] });
-    await expect(analyzeImage("abc123==")).rejects.toThrow("Empty response from Claude API");
+    mockGenerate.mockResolvedValueOnce({ text: null });
+    await expect(analyzeImage("abc123==")).rejects.toThrow("Empty response from Gemini API");
   });
 
-  test("throws when Claude returns non-JSON text", async () => {
-    mockCreate.mockResolvedValueOnce(makeApiResponse("Sorry, I cannot analyze this image."));
+  test("throws when Gemini returns non-JSON text", async () => {
+    mockGenerate.mockResolvedValueOnce(makeApiResponse("Sorry, I cannot analyze this image."));
     await expect(analyzeImage("abc123==")).rejects.toThrow("non-JSON response");
   });
 });
@@ -139,6 +140,12 @@ describe("parseResponse", () => {
     expect(result.isHealthy).toBe(false);
     expect(result.disease).toBe("Maize Grey Leaf Spot");
     expect(result.severity).toBe("medium");
+  });
+
+  test("strips markdown code fences before parsing", () => {
+    const wrapped = "```json\n" + HEALTHY_JSON + "\n```";
+    const result = parseResponse(wrapped);
+    expect(result.isHealthy).toBe(true);
   });
 
   test("throws for invalid JSON", () => {
@@ -180,18 +187,18 @@ describe("parseResponse", () => {
 // ── Test suite: buildMessages ─────────────────────────────────────────────────
 
 describe("buildMessages", () => {
-  test("builds the correct messages array without cropType", () => {
+  test("builds the correct Gemini contents array without cropType", () => {
     const msgs = buildMessages("imgdata==", "image/jpeg");
     expect(msgs).toHaveLength(1);
     expect(msgs[0].role).toBe("user");
-    expect(msgs[0].content[0].type).toBe("image");
-    expect(msgs[0].content[0].source.data).toBe("imgdata==");
-    expect(msgs[0].content[0].source.media_type).toBe("image/jpeg");
-    expect(msgs[0].content[1].type).toBe("text");
+    // Gemini uses `parts` (with inlineData/text) instead of content blocks
+    expect(msgs[0].parts[0].inlineData.data).toBe("imgdata==");
+    expect(msgs[0].parts[0].inlineData.mimeType).toBe("image/jpeg");
+    expect(typeof msgs[0].parts[1].text).toBe("string");
   });
 
-  test("includes the crop type hint in the text message", () => {
+  test("includes the crop type hint in the text part", () => {
     const msgs = buildMessages("imgdata==", "image/png", "teff");
-    expect(msgs[0].content[1].text).toContain("teff");
+    expect(msgs[0].parts[1].text).toContain("teff");
   });
 });

@@ -26,7 +26,7 @@ router.use(verifyToken);
 
 /**
  * @route   POST /api/v1/sensor-analysis
- * @desc    Analyze IoT sensor readings with Claude AI and get farming recommendations
+ * @desc    Analyze IoT sensor readings with Gemini AI and get farming recommendations
  * @access  Private (Bearer token)
  * @body    JSON: { temperature, humidity, soilMoisture, cropType? }
  */
